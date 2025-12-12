@@ -1,0 +1,273 @@
+{
+	"info": {
+		"name": "FrameMaker to DITA Transformation API",
+		"description": "REST API for transforming FrameMaker files to DITA format",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Upload and Transform File",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    pm.collectionVariables.set(\"jobId\", jsonData.jobId);",
+							"    console.log(\"✅ Job ID saved: \" + jsonData.jobId);",
+							"    console.log(\"Status: \" + jsonData.status);",
+							"} else {",
+							"    console.log(\"❌ Error: \" + pm.response.code);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"description": "Select a .mif or .fm file"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/transform/framemaker-to-dita",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"transform",
+						"framemaker-to-dita"
+					]
+				},
+				"description": "Upload a FrameMaker file (.fm or .mif) for transformation.\n\n**Response:** Returns a job ID that you'll use for other endpoints."
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/transform/framemaker-to-dita",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"transform",
+								"framemaker-to-dita"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"jobId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"status\": \"PENDING\",\n    \"message\": \"Transformation job submitted successfully\",\n    \"createdAt\": \"2024-12-12T10:00:00\"\n}"
+				}
+			]
+		},
+		{
+			"name": "2. Get Job Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/transform/{{jobId}}/status",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"transform",
+						"{{jobId}}",
+						"status"
+					]
+				},
+				"description": "Get the current status of a transformation job.\n\n**Returns:** Plain text - PENDING, PROCESSING, COMPLETED, or FAILED\n\n**Note:** Use {{jobId}} variable from the upload response."
+			},
+			"response": [
+				{
+					"name": "Status Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/transform/{{jobId}}/status",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"transform",
+								"{{jobId}}",
+								"status"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain;charset=UTF-8"
+						}
+					],
+					"body": "PROCESSING"
+				}
+			]
+		},
+		{
+			"name": "3. Get Job Details",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/transform/{{jobId}}/details",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"transform",
+						"{{jobId}}",
+						"details"
+					]
+				},
+				"description": "Get detailed information about a transformation job including status, output path, and error messages."
+			},
+			"response": [
+				{
+					"name": "Job Details Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/transform/{{jobId}}/details",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"transform",
+								"{{jobId}}",
+								"details"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"jobId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"status\": \"COMPLETED\",\n    \"createdAt\": \"2024-12-12T10:00:00\",\n    \"outputPath\": \"/path/to/output\"\n}"
+				}
+			]
+		},
+		{
+			"name": "4. Download Result (ZIP File)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// This endpoint returns a binary ZIP file",
+							"// Use 'Send and Download' button instead of regular 'Send'",
+							"console.log(\"⚠️ IMPORTANT: Click 'Send and Download' (dropdown next to Send button) to download the ZIP file\");",
+							"console.log(\"The response body will show binary data - this is normal for ZIP files!\");"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    console.log(\"✅ ZIP file received successfully!\");",
+							"    console.log(\"File size: \" + pm.response.headers.get(\"Content-Length\") + \" bytes\");",
+							"    console.log(\"⚠️ If you see binary data (PK, NUL, etc.), that's normal!\");",
+							"    console.log(\"✅ Use 'Send and Download' button to save the ZIP file\");",
+							"} else if (pm.response.code === 404) {",
+							"    console.log(\"❌ Job not found or transformation not completed yet\");",
+							"    console.log(\"Check status first using endpoint #2\");",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/transform/{{jobId}}/result",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"transform",
+						"{{jobId}}",
+						"result"
+					]
+				},
+				"description": "⚠️ **IMPORTANT - HOW TO DOWNLOAD THE ZIP FILE:**\n\nThis endpoint returns a **BINARY ZIP FILE**, not JSON text!\n\nThe binary data you see (PK, NUL, control characters) is **NORMAL** - it's the ZIP file contents.\n\n**TO DOWNLOAD THE FILE:**\n1. Click the **dropdown arrow** next to the **Send** button\n2. Select **\"Send and Download\"** from the menu\n3. Postman will prompt you to save the file\n4. Save it as `transformation_{{jobId}}.zip`\n\n**Alternative method:**\n- After clicking Send, in the response section:\n- Click the **three dots (...)** menu\n- Select **\"Save Response\"** → **\"Save to a file\"**\n\n**What's in the ZIP?**\n- main.ditamap\n- table-of-contents/toc.xml\n- xml/topic_*.xml files\n- images/*.eps files\n- chapters/chapter_*.ditamap files"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "jobId",
+			"value": "550e8400-e29b-41d4-a716-446655440000",
+			"type": "string",
+			"description": "Job ID from upload response (auto-set by test script)"
+		}
+	]
+}
