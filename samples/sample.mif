@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MIFFile Version="7.0">
+<Document>
+<Title>Sample FrameMaker Document</Title>
+<Chapter>
+<ChapterTitle>Introduction</ChapterTitle>
+<Section>
+<Para Format="Heading1">Overview</Para>
+<Para Format="Body">This is a sample FrameMaker document for testing the transformation system.</Para>
+<Para Format="Body">It contains multiple sections and paragraphs to demonstrate the conversion process.</Para>
+</Section>
+<Section>
+<Para Format="Heading2">Purpose</Para>
+<Para Format="Body">The purpose of this document is to test the FrameMaker to DITA transformation.</Para>
+<Image ImageFile="sample_image.eps"/>
+</Section>
+</Chapter>
+<Chapter>
+<ChapterTitle>Main Content</ChapterTitle>
+<Section>
+<Para Format="Heading1">Chapter Content</Para>
+<Para Format="Body">This chapter contains the main content of the document.</Para>
+<Table>
+<TableElement>
+<Row>
+<Cell>Column 1</Cell>
+<Cell>Column 2</Cell>
+</Row>
+</TableElement>
+</Table>
+</Section>
+</Chapter>
+</Document>
+</MIFFile>
+

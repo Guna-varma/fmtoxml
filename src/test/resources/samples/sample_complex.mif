@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MIFFile Version="7.0">
+<Document>
+<Title>Complex Sample Document</Title>
+<Chapter>
+<ChapterTitle>Getting Started</ChapterTitle>
+<Section>
+<Para Format="Heading1">Installation</Para>
+<Para Format="Body">Follow these steps to install the application.</Para>
+<Para Format="Body">Step 1: Download the software.</Para>
+<Para Format="Body">Step 2: Run the installer.</Para>
+<Image ImageFile="install_screenshot.eps"/>
+</Section>
+<Section>
+<Para Format="Heading2">Configuration</Para>
+<Para Format="Body">Configure the application settings.</Para>
+</Section>
+</Chapter>
+<Chapter>
+<ChapterTitle>Advanced Topics</ChapterTitle>
+<Section>
+<Para Format="Heading1">Customization</Para>
+<Para Format="Body">Learn how to customize the application.</Para>
+<Table>
+<TableElement>
+<Row>
+<Cell>Feature</Cell>
+<Cell>Description</Cell>
+</Row>
+<Row>
+<Cell>Feature A</Cell>
+<Cell>Description of Feature A</Cell>
+</Row>
+</TableElement>
+</Table>
+</Section>
+</Chapter>
+</Document>
+</MIFFile>
+
