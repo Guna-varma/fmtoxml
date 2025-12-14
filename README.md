@@ -1,260 +1,183 @@
-# FrameMaker to DITA Transformation Web Application
+# FrameMaker to DITA Transformation API
 
-A production-ready Spring Boot REST API web application that transforms FrameMaker files (.fm/.mif) into DITA (Darwin Information Typing Architecture) format.
+A production-ready REST API for transforming FrameMaker files (.fm/.mif) to DITA format with automatic folder validation and image file support.
 
-## 🎯 Overview
+## 🎯 Features
 
-This is a **web application** that provides REST API endpoints for:
-- Uploading FrameMaker files
-- Asynchronously transforming them to DITA format
-- Tracking transformation job status
-- Downloading transformed DITA files as ZIP archives
+- ✅ **Unified API Endpoint:** Validation and transformation in one API call
+- ✅ **Automatic Validation:** Strict folder validation rules applied automatically
+- ✅ **Image Support:** Accepts .eps, .png, .jpg, .jpeg, .gif, .svg, .bmp, .tiff files
+- ✅ **Batch Processing:** Transform multiple files in a folder
+- ✅ **Job Tracking:** Monitor transformation progress with status endpoints
+- ✅ **Production Ready:** Comprehensive error handling, logging, and security
+
+## 📋 Validation Rules
+
+The API automatically validates uploaded folders according to these rules:
+
+1. ✅ **Folder must contain only `.fm` files** OR
+2. ✅ **Folder must contain only `.mif` files**
+3. ❌ **Mixed `.fm` + `.mif` is invalid**
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Java 17+
-- Maven 3.6+
-- PostgreSQL (running on localhost:5432)
-- Database: `spear` (must exist)
 
-### Start Application
+- Java 17 or higher
+- Maven 3.6 or higher
+
+### Build and Run
 
 ```bash
+# Build the project
+mvn clean package
+
+# Run the application
 mvn spring-boot:run
 ```
 
-The application will start on **http://localhost:8080**
+The API will be available at: `http://localhost:8080`
 
-### Build and Run JAR
+## 📖 Usage
+
+### 1. Upload Folder for Transformation
 
 ```bash
-mvn clean package
-java -jar target/framemaker-dita-transformation-1.0.0.jar
+POST http://localhost:8080/api/transform/folder-to-dita
+Content-Type: multipart/form-data
+
+zipFile: [Select ZIP file containing .fm or .mif files]
 ```
-
-## 📡 REST API Endpoints
-
-All endpoints are available at: `http://localhost:8080/api/transform`
-
-### 1. Upload and Transform File
-
-**POST** `/api/transform/framemaker-to-dita`
-
-Upload a FrameMaker file (.fm or .mif) for transformation.
-
-**Request:**
-- Content-Type: `multipart/form-data`
-- Parameter: `file` (the FrameMaker file)
 
 **Response:**
 ```json
 {
     "jobId": "550e8400-e29b-41d4-a716-446655440000",
     "status": "PENDING",
-    "message": "Transformation job submitted successfully",
-    "createdAt": "2024-12-12T10:00:00"
+    "validationPassed": true,
+    "validationMessage": "Validation successful: Folder contains 5 .fm file(s)",
+    "fileType": "FM",
+    "validatedFileCount": 5,
+    "validatedFileNames": ["file1.fm", "file2.fm", ...]
 }
 ```
 
-### 2. Upload and Transform Folder (ZIP)
+### 2. Check Job Status
 
-**POST** `/api/transform/folder-to-dita`
-
-Upload a ZIP file containing multiple FrameMaker files (.fm or .mif) and folder structure for batch transformation.
-
-**Request:**
-- Content-Type: `multipart/form-data`
-- Parameter: `zipFile` (ZIP file containing .fm/.mif files and folders)
-- Maximum file size: 500MB
-
-**ZIP Structure:**
-The ZIP file should contain:
-- Multiple `.fm` or `.mif` files (can be in subdirectories)
-- Optional folders: `Images`, `images`, `logo`, `Logo`, `logos`, `Logos` (will be preserved in output)
-
-**Response:**
-```json
-{
-    "jobId": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "PENDING",
-    "message": "Folder transformation job submitted successfully",
-    "createdAt": "2024-12-12T10:00:00"
-}
+```bash
+GET http://localhost:8080/api/transform/{jobId}/status
 ```
 
-**Output Structure:**
-The transformed output maintains the same folder structure:
-```
-output/
-├── main.ditamap
-├── table-of-contents/
-│   └── toc.xml
-├── xml/
-│   ├── topic_001.xml
-│   ├── topic_002.xml
-│   └── ...
-├── images/
-│   ├── *.eps
-│   └── *.png / *.jpg
-├── chapters/
-│   ├── chapter_01.ditamap
-│   └── ...
-├── Images/ (preserved from input)
-└── logo/ (preserved from input)
+**Response:** `PENDING`, `PROCESSING`, `COMPLETED`, or `FAILED`
+
+### 3. Download Result
+
+```bash
+GET http://localhost:8080/api/transform/{jobId}/result
 ```
 
-**Validation:**
-- ZIP file must not be empty
-- ZIP file must contain at least one `.fm` or `.mif` file
-- File size must not exceed 500MB
-- Invalid ZIP format will be rejected
+**Response:** Binary ZIP file containing transformed DITA files
 
-### 3. Get Job Status
-
-**GET** `/api/transform/{jobId}/status`
-
-Get the current status of a transformation job.
-
-**Response:** Plain text
-- `PENDING`
-- `PROCESSING`
-- `COMPLETED`
-- `FAILED`
-
-### 4. Get Job Details
-
-**GET** `/api/transform/{jobId}/details`
-
-Get detailed information about a transformation job.
-
-**Response:**
-```json
-{
-    "jobId": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "COMPLETED",
-    "createdAt": "2024-12-12T10:00:00",
-    "outputPath": "/path/to/output"
-}
-```
-
-### 5. Download Transformation Result
-
-**GET** `/api/transform/{jobId}/result`
-
-Download the transformed DITA files as a ZIP archive.
-
-**Response:** Binary ZIP file download
-
-**⚠️ IMPORTANT - In Postman:**
-- This endpoint returns a **BINARY ZIP FILE**, not JSON
-- Use **"Send and Download"** button (dropdown next to Send) to download
-- If you see binary data (PK, NUL characters) in the response body, that's normal!
-- See `HOW_TO_DOWNLOAD_ZIP_IN_POSTMAN.md` for detailed instructions
-
-## 🗄️ Database Configuration
-
-The application uses **PostgreSQL** database.
-
-**Connection Details:**
-- Host: `localhost`
-- Port: `5432`
-- Database: `spear`
-- Username: `postgres`
-- Password: `1234`
-
-**Configuration:** `src/main/resources/application.yml`
-
-All settings can be overridden via environment variables:
-- `DB_HOST`
-- `DB_PORT`
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_NAME`
-- `SERVER_PORT`
-
-**Table:** `transformation_jobs` (auto-created by JPA/Hibernate)
-
-## 📦 Output Structure
-
-Transformed files are organized as:
+## 📁 Project Structure
 
 ```
-output/
-├── main.ditamap
-├── table-of-contents/
-│   └── toc.xml
-├── xml/
-│   ├── topic_001.xml
-│   ├── topic_002.xml
-│   └── ...
-├── images/
-│   ├── *.eps
-│   └── *.png / *.jpg (if any)
-└── chapters/
-    ├── chapter_01.ditamap
-    ├── chapter_02.ditamap
-    └── ...
+src/main/java/com/cms/projects/transformation/
+├── controller/
+│   └── TransformationController.java      # REST API endpoints
+├── service/
+│   ├── TransformationService.java          # Transformation logic
+│   ├── TransformationServiceImpl.java     # Implementation
+│   ├── FolderValidationService.java       # Folder validation
+│   ├── FolderZipService.java              # ZIP file operations
+│   └── FileStorageService.java            # File storage operations
+├── dto/
+│   ├── FolderTransformationResponse.java   # Response DTOs
+│   └── FolderValidationResult.java        # Validation result DTO
+├── transformer/
+│   └── FrameMakerToDitaTransformer.java    # Core transformation logic
+└── exception/
+    └── GlobalExceptionHandler.java        # Error handling
 ```
-
-## 🔧 Technology Stack
-
-- **Java 17**
-- **Spring Boot 3.2.0**
-- **PostgreSQL** (with JPA/Hibernate)
-- **Maven**
-- **dom4j** (XML processing)
-- **JAXB**
-- **Apache Commons IO/Compress**
-
-## 📋 Features
-
-- ✅ RESTful API for file upload and transformation
-- ✅ **Batch folder transformation (ZIP upload)**
-- ✅ Asynchronous job processing
-- ✅ PostgreSQL database for job tracking
-- ✅ Support for MIF format (.mif files)
-- ✅ Image extraction (.eps files)
-- ✅ Table of contents generation
-- ✅ DITA topic and map generation
-- ✅ ZIP download of transformed files
-- ✅ **Production-ready validation and error handling**
-- ✅ **Preserves folder structure (Images, logo folders)**
 
 ## 🧪 Testing
 
-Run all tests:
-```bash
-mvn test
+### Using Postman
+
+1. Import `Postman_Collection_Complete.json` into Postman
+2. Set base URL: `http://localhost:8080`
+3. Use endpoint: **"2. Upload Folder - Transform (with Validation)"**
+4. Upload your ZIP file
+5. Check status and download result
+
+### Test Scenarios
+
+1. **Valid .fm Only Folder:** Should pass validation
+2. **Valid .mif Only Folder:** Should pass validation
+3. **Invalid Mixed Folder:** Should return 400 error
+4. **Folder with .eps Images:** Should copy images to output
+
+## 📦 Accepted File Formats
+
+### FrameMaker Files
+- `.fm` - FrameMaker binary files
+- `.mif` - FrameMaker interchange format files
+
+### Image Files (Automatically Copied)
+- `.eps` - Encapsulated PostScript ✅
+- `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.bmp`, `.tiff`
+
+## ⚙️ Configuration
+
+### Application Properties
+
+Default configuration in `application.yml`:
+
+```yaml
+transformation:
+  framemaker:
+    input-path: ${user.home}/framemaker/input
+    temp-path: ${user.home}/framemaker/temp
 ```
 
-**Test Results:** ✅ All 11 tests passing
+### File Size Limits
 
-## 📝 API Documentation
+- Maximum ZIP file size: **500MB**
+- Configurable in `TransformationController.java`
 
-See `API_Documentation.md` for detailed API documentation.
+## 🔒 Security Features
 
-**Postman Collection:** Import `Postman_Collection.json` into Postman for easy testing.
+- ✅ ZIP slip vulnerability prevention
+- ✅ Input validation
+- ✅ File type validation
+- ✅ Size limits
 
-## 🔒 Production Considerations
+## 📚 API Documentation
 
-- Uses PostgreSQL for persistent storage
-- Asynchronous processing for scalability
-- **Comprehensive validation with Jakarta Bean Validation**
-- **Global exception handler for consistent error responses**
-- **Entity validation with constraints (NotBlank, Size, NotNull)**
-- **File size validation and security checks (ZIP slip prevention)**
-- RESTful API design
-- Production-grade logging configuration
-- Environment variable support for configuration
-- **Input validation on all endpoints**
+For complete API documentation, see [API_IMPLEMENTATION.md](API_IMPLEMENTATION.md)
 
-## ⚠️ Limitations
+## 🐛 Troubleshooting
 
-1. **Binary FrameMaker (.fm) files are NOT supported** - only MIF format
-2. Complex table structures may require manual adjustment
-3. Embedded graphics extraction depends on file references
+### Issue: "Validation failed: Mixed file types"
+**Solution:** Ensure your ZIP contains only `.fm` files OR only `.mif` files, not both.
 
-## 📄 License
+### Issue: ".eps files not in output"
+**Solution:** .eps files are automatically copied to `images/` folder. Check the output ZIP structure.
 
-This project is provided as-is for transformation purposes.
+### Issue: "Job not found"
+**Solution:** Check that the job ID is correct and the transformation has completed.
+
+### Issue: "File too large"
+**Solution:** Reduce ZIP file size to under 500MB.
+
+## 📝 License
+
+This project is proprietary software.
+
+## 👥 Support
+
+For issues or questions, check the logs or contact the development team.
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** December 2024

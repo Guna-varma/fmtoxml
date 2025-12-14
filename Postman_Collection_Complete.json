@@ -1,0 +1,321 @@
+{
+	"info": {
+		"name": "FrameMaker to DITA Transformation API - Complete",
+		"description": "Complete REST API for transforming FrameMaker files to DITA format with folder validation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_postman_id": "frame-maker-dita-api-complete"
+	},
+	"item": [
+		{
+			"name": "Single File Transformation",
+			"item": [
+				{
+					"name": "1. Upload and Transform File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"jobId\", jsonData.jobId);",
+									"    console.log(\"✅ Job ID saved: \" + jsonData.jobId);",
+									"    console.log(\"Status: \" + jsonData.status);",
+									"} else {",
+									"    console.log(\"❌ Error: \" + pm.response.code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Select a .mif or .fm file"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transform/framemaker-to-dita",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transform", "framemaker-to-dita"]
+						},
+						"description": "Upload a FrameMaker file (.fm or .mif) for transformation.\n\n**Request Parameters:**\n- `file` (form-data, file): FrameMaker file (.fm or .mif)\n\n**Response:** Returns a job ID that you'll use for other endpoints."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Folder Transformation (Main API)",
+			"item": [
+				{
+					"name": "2. Upload Folder - Transform (with Validation)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"folderJobId\", jsonData.jobId);",
+									"    pm.collectionVariables.set(\"jobId\", jsonData.jobId);",
+									"    console.log(\"✅ Folder Job ID saved: \" + jsonData.jobId);",
+									"    console.log(\"Status: \" + jsonData.status);",
+									"    if (jsonData.validationPassed) {",
+									"        console.log(\"✅ Validation Passed: \" + jsonData.validationMessage);",
+									"        console.log(\"File Type: \" + jsonData.fileType);",
+									"        console.log(\"File Count: \" + jsonData.validatedFileCount);",
+									"    }",
+									"} else if (pm.response.code === 400) {",
+									"    var jsonData = pm.response.json();",
+									"    console.log(\"❌ Validation Failed: \" + jsonData.message);",
+									"} else {",
+									"    console.log(\"❌ Error: \" + pm.response.code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "zipFile",
+									"type": "file",
+									"src": [],
+									"description": "ZIP file containing FrameMaker files. Must contain ONLY .fm files OR ONLY .mif files (not mixed). Image files (.eps, .png, .jpg, etc.) are automatically accepted."
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transform/folder-to-dita",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transform", "folder-to-dita"]
+						},
+						"description": "🎯 **MAIN API ENDPOINT** - Upload folder → Get output folder\n\nThis endpoint combines validation and transformation in one API call.\n\n**Validation Rules (Applied Automatically):**\n- ✅ Folder must contain only .fm files OR only .mif files\n- ❌ Mixed .fm + .mif is invalid\n- ✅ Maximum file size: 500MB\n- ✅ Image files accepted: .eps, .png, .jpg, .jpeg, .gif, .svg, .bmp, .tiff\n\n**Request Parameters:**\n- `zipFile` (form-data, file): ZIP file containing FrameMaker files\n\n**Response (200 OK - Validation Passed):**\n```json\n{\n    \"jobId\": \"...\",\n    \"status\": \"PENDING\",\n    \"validationPassed\": true,\n    \"validationMessage\": \"Validation successful: Folder contains 5 .fm file(s)\",\n    \"fileType\": \"FM\",\n    \"validatedFileCount\": 5,\n    \"validatedFileNames\": [\"file1.fm\", ...]\n}\n```\n\n**Response (400 Bad Request - Validation Failed):**\n```json\n{\n    \"status\": 400,\n    \"error\": \"Bad Request\",\n    \"message\": \"Invalid folder structure: Mixed file types detected...\"\n}\n```\n\n**Workflow:**\n1. Upload ZIP → Validation happens automatically\n2. If validation passes → Transformation job starts\n3. Check status → GET /api/transform/{jobId}/status\n4. Download result → GET /api/transform/{jobId}/result"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Folder Validation (Optional)",
+			"item": [
+				{
+					"name": "3. Validate Folder Only",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    console.log(\"✅ Validation passed!\");",
+									"    console.log(\"File Type: \" + jsonData.fileType);",
+									"    console.log(\"File Count: \" + jsonData.fileCount);",
+									"    pm.collectionVariables.set(\"validationJobId\", jsonData.jobId);",
+									"} else if (pm.response.code === 400) {",
+									"    var jsonData = pm.response.json();",
+									"    console.log(\"❌ Validation failed: \" + jsonData.message);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "zipFile",
+									"type": "file",
+									"src": [],
+									"description": "ZIP file to validate"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transform/validate-folder",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transform", "validate-folder"]
+						},
+						"description": "Validates a folder structure according to business rules:\n\n**Validation Rules:**\n1. Folder must contain only .fm files\n2. Folder must contain only .mif files\n3. Mixed .fm + .mif is invalid\n\n**Request Parameters:**\n- `zipFile` (form-data, file): ZIP file to validate\n\n**Response (200 OK - Valid):**\n```json\n{\n    \"valid\": true,\n    \"message\": \"Validation successful: Folder contains 5 .fm file(s)\",\n    \"fileType\": \"FM\",\n    \"fileCount\": 5,\n    \"fileNames\": [\"file1.fm\", \"file2.fm\", ...],\n    \"timestamp\": \"2024-12-12T10:00:00\",\n    \"jobId\": \"...\"\n}\n```\n\n**Response (400 Bad Request - Invalid):**\n```json\n{\n    \"valid\": false,\n    \"message\": \"Invalid folder structure: Mixed file types detected...\",\n    \"fileType\": null,\n    \"fileCount\": 0,\n    \"fileNames\": [],\n    \"timestamp\": \"2024-12-12T10:00:00\",\n    \"jobId\": \"...\"\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "4. Validate and Zip Folder (Optional)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log(\"⚠️ IMPORTANT: This endpoint returns a ZIP file if validation passes!\");",
+									"console.log(\"Use 'Send and Download' button to save the validated ZIP file.\");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    console.log(\"✅ Validation passed and ZIP file created!\");",
+									"    console.log(\"File Type: \" + pm.response.headers.get(\"X-File-Type\"));",
+									"    console.log(\"File Count: \" + pm.response.headers.get(\"X-File-Count\"));",
+									"    console.log(\"⚠️ Use 'Send and Download' to save the ZIP file\");",
+									"} else if (pm.response.code === 400) {",
+									"    var jsonData = pm.response.json();",
+									"    console.log(\"❌ Validation failed: \" + jsonData.message);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "zipFile",
+									"type": "file",
+									"src": [],
+									"description": "ZIP file to validate and zip"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transform/validate-and-zip",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transform", "validate-and-zip"]
+						},
+						"description": "Validates a folder and creates a ZIP file if validation passes.\n\n**Validation Rules:**\n1. Folder must contain only .fm files\n2. Folder must contain only .mif files\n3. Mixed .fm + .mif is invalid\n\n**Request Parameters:**\n- `zipFile` (form-data, file): ZIP file to validate and zip\n\n**Response (200 OK - Valid):**\n- Returns a **BINARY ZIP FILE** (not JSON!)\n- Response headers contain metadata:\n  - `X-Validation-Status`: VALID\n  - `X-File-Type`: FM or MIF\n  - `X-File-Count`: Number of files\n\n**How to Download:**\n1. Click dropdown arrow next to **Send** button\n2. Select **\"Send and Download\"**\n3. Save the file\n\n**Response (400 Bad Request - Invalid):**\n```json\n{\n    \"timestamp\": \"2024-12-12T10:00:00\",\n    \"status\": 400,\n    \"error\": \"Bad Request\",\n    \"message\": \"Invalid folder structure: Mixed file types detected...\"\n}\n```"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Job Status & Results",
+			"item": [
+				{
+					"name": "5. Get Job Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transform/{{jobId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transform", "{{jobId}}", "status"]
+						},
+						"description": "Get the current status of a transformation job.\n\n**Request Parameters:**\n- `jobId` (path parameter): Job ID from upload response\n\n**Response:**\n- Plain text: `PENDING`, `PROCESSING`, `COMPLETED`, or `FAILED`\n\n**Status Values:**\n- `PENDING`: Job is queued\n- `PROCESSING`: Job is being processed\n- `COMPLETED`: Job completed successfully\n- `FAILED`: Job failed with error"
+					},
+					"response": []
+				},
+				{
+					"name": "6. Get Job Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transform/{{jobId}}/details",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transform", "{{jobId}}", "details"]
+						},
+						"description": "Get detailed information about a transformation job.\n\n**Request Parameters:**\n- `jobId` (path parameter): Job ID from upload response\n\n**Response (200 OK):**\n```json\n{\n    \"jobId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"status\": \"COMPLETED\",\n    \"createdAt\": \"2024-12-12T10:00:00\",\n    \"outputPath\": \"/path/to/output\",\n    \"message\": null\n}\n```\n\n**Response (404 Not Found):**\n- Job ID not found"
+					},
+					"response": []
+				},
+				{
+					"name": "7. Download Result (ZIP File)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"console.log(\"⚠️ IMPORTANT: This endpoint returns a binary ZIP file!\");",
+									"console.log(\"Use 'Send and Download' button to save the ZIP file.\");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    console.log(\"✅ ZIP file received successfully!\");",
+									"    console.log(\"File size: \" + pm.response.headers.get(\"Content-Length\") + \" bytes\");",
+									"    console.log(\"⚠️ Use 'Send and Download' button to save the ZIP file\");",
+									"} else if (pm.response.code === 404) {",
+									"    console.log(\"❌ Job not found or transformation not completed yet\");",
+									"    console.log(\"Check status first using endpoint #5\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transform/{{jobId}}/result",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transform", "{{jobId}}", "result"]
+						},
+						"description": "Download the transformation result as a ZIP file.\n\n**Request Parameters:**\n- `jobId` (path parameter): Job ID from upload response\n\n**Response (200 OK):**\n- Returns a **BINARY ZIP FILE** (not JSON!)\n- Filename: `transformation_{{jobId}}.zip`\n\n**How to Download:**\n1. Click dropdown arrow next to **Send** button\n2. Select **\"Send and Download\"**\n3. Save the file\n\n**Response (404 Not Found):**\n- Job not found or transformation not completed yet\n\n**ZIP Contents:**\n- `main.ditamap`\n- `table-of-contents/toc.xml`\n- `xml/topic_*.xml` files\n- `images/*.eps` files\n- `chapters/chapter_*.ditamap` files"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "jobId",
+			"value": "",
+			"type": "string",
+			"description": "Job ID from upload response (auto-set by test script)"
+		},
+		{
+			"key": "folderJobId",
+			"value": "",
+			"type": "string",
+			"description": "Folder transformation job ID (auto-set by test script)"
+		},
+		{
+			"key": "validationJobId",
+			"value": "",
+			"type": "string",
+			"description": "Validation job ID (auto-set by test script)"
+		}
+	]
+}
+

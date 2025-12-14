@@ -15,6 +15,13 @@ public class FolderTransformationResponse {
     private Integer failedFiles;
     private List<String> processedFileNames;
     private List<String> failedFileNames;
+    
+    // Validation information
+    private Boolean validationPassed;
+    private String validationMessage;
+    private String fileType; // FM or MIF
+    private Integer validatedFileCount;
+    private List<String> validatedFileNames;
 
     public FolderTransformationResponse() {
     }
@@ -97,6 +104,47 @@ public class FolderTransformationResponse {
 
     public void setFailedFileNames(List<String> failedFileNames) {
         this.failedFileNames = failedFileNames;
+    }
+    
+    // Validation getters and setters
+    public Boolean getValidationPassed() {
+        return validationPassed;
+    }
+    
+    public void setValidationPassed(Boolean validationPassed) {
+        this.validationPassed = validationPassed;
+    }
+    
+    public String getValidationMessage() {
+        return validationMessage;
+    }
+    
+    public void setValidationMessage(String validationMessage) {
+        this.validationMessage = validationMessage;
+    }
+    
+    public String getFileType() {
+        return fileType;
+    }
+    
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
+    
+    public Integer getValidatedFileCount() {
+        return validatedFileCount;
+    }
+    
+    public void setValidatedFileCount(Integer validatedFileCount) {
+        this.validatedFileCount = validatedFileCount;
+    }
+    
+    public List<String> getValidatedFileNames() {
+        return validatedFileNames;
+    }
+    
+    public void setValidatedFileNames(List<String> validatedFileNames) {
+        this.validatedFileNames = validatedFileNames;
     }
 }
 

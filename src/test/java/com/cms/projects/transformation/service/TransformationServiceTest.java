@@ -2,9 +2,8 @@ package com.cms.projects.transformation.service;
 
 import com.cms.projects.transformation.dto.TransformationResponse;
 import com.cms.projects.transformation.entity.TransformationJob;
-import com.cms.projects.transformation.entity.TransformationJobRepository;
+import com.cms.projects.transformation.repo.TransformationJobRepository;
 import com.cms.projects.transformation.transformer.FrameMakerToDitaTransformer;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

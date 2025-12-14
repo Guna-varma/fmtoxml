@@ -4,7 +4,7 @@ import com.cms.projects.transformation.dto.FolderTransformationResponse;
 import com.cms.projects.transformation.dto.FolderValidationResult;
 import com.cms.projects.transformation.dto.TransformationResponse;
 import com.cms.projects.transformation.entity.TransformationJob;
-import com.cms.projects.transformation.entity.TransformationJobRepository;
+import com.cms.projects.transformation.repo.TransformationJobRepository;
 import com.cms.projects.transformation.framemaker.exception.FrameMakerUnsupportedFormatException;
 import com.cms.projects.transformation.transformer.FrameMakerToDitaTransformer;
 import org.slf4j.Logger;

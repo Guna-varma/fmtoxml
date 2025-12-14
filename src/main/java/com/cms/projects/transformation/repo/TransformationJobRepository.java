@@ -1,5 +1,6 @@
-package com.cms.projects.transformation.entity;
+package com.cms.projects.transformation.repo;
 
+import com.cms.projects.transformation.entity.TransformationJob;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
