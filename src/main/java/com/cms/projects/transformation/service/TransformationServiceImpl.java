@@ -1,6 +1,7 @@
 package com.cms.projects.transformation.service;
 
 import com.cms.projects.transformation.dto.FolderTransformationResponse;
+import com.cms.projects.transformation.dto.FolderValidationResult;
 import com.cms.projects.transformation.dto.TransformationResponse;
 import com.cms.projects.transformation.entity.TransformationJob;
 import com.cms.projects.transformation.entity.TransformationJobRepository;
@@ -32,15 +33,18 @@ public class TransformationServiceImpl implements TransformationService {
     private final TransformationJobRepository jobRepository;
     private final FrameMakerToDitaTransformer transformer;
     private final FileStorageService fileStorageService;
+    private final FolderValidationService folderValidationService;
     
     @Autowired
     public TransformationServiceImpl(
             TransformationJobRepository jobRepository,
             FrameMakerToDitaTransformer transformer,
-            FileStorageService fileStorageService) {
+            FileStorageService fileStorageService,
+            FolderValidationService folderValidationService) {
         this.jobRepository = jobRepository;
         this.transformer = transformer;
         this.fileStorageService = fileStorageService;
+        this.folderValidationService = folderValidationService;
     }
     
     @Override
@@ -168,12 +172,19 @@ public class TransformationServiceImpl implements TransformationService {
             
             extractedDir = fileStorageService.extractZipFile(zipFile, jobId);
             
-            // Find all FrameMaker files
-            List<Path> fmFiles = fileStorageService.findFrameMakerFiles(extractedDir);
+            // Validate folder structure before processing
+            FolderValidationResult validationResult = folderValidationService.validateFolder(extractedDir);
             
-            if (fmFiles.isEmpty()) {
-                throw new IllegalArgumentException("No FrameMaker files (.fm or .mif) found in the ZIP archive");
+            if (!validationResult.isValid()) {
+                throw new IllegalArgumentException(validationResult.getMessage());
             }
+            
+            logger.info("Folder validation passed: {} {} files found", 
+                       validationResult.getFileCount(),
+                       validationResult.getFileType() == FolderValidationResult.FileType.FM ? ".fm" : ".mif");
+            
+            // Get validated files
+            List<Path> fmFiles = validationResult.getFiles();
             
             // Create main output directory
             outputDir = fileStorageService.getOutputPath(jobId);
@@ -231,6 +242,9 @@ public class TransformationServiceImpl implements TransformationService {
             // Copy additional folders (Images, logo, etc.)
             List<String> additionalFolders = Arrays.asList("Images", "images", "logo", "Logo", "logos", "Logos");
             fileStorageService.copyAdditionalFolders(extractedDir, outputDir, additionalFolders);
+            
+            // Copy all image files (.eps, .png, .jpg, .jpeg, .gif) from any location
+            copyImageFiles(extractedDir, outputDir.resolve("images"));
             
             // Generate or merge main.ditamap if needed
             ensureMainDitamap(outputDir);
@@ -397,6 +411,52 @@ public class TransformationServiceImpl implements TransformationService {
                     }
                 });
         }
+    }
+    
+    /**
+     * Copy all image files (.eps, .png, .jpg, .jpeg, .gif) from source directory to images directory
+     * This ensures .eps files and other image formats are preserved in the output
+     */
+    private void copyImageFiles(Path sourceDir, Path imagesDir) throws IOException {
+        if (!Files.exists(sourceDir)) {
+            return;
+        }
+        
+        Files.createDirectories(imagesDir);
+        
+        List<String> imageExtensions = Arrays.asList(".eps", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".bmp", ".tiff");
+        
+        Files.walk(sourceDir)
+            .filter(Files::isRegularFile)
+            .filter(path -> {
+                String fileName = path.getFileName().toString().toLowerCase();
+                return imageExtensions.stream().anyMatch(fileName::endsWith);
+            })
+            .forEach(imageFile -> {
+                try {
+                    // Skip if already in images directory (to avoid duplicates)
+                    if (imageFile.getParent().equals(imagesDir)) {
+                        return;
+                    }
+                    
+                    String fileName = imageFile.getFileName().toString();
+                    Path targetFile = imagesDir.resolve(fileName);
+                    
+                    // If file exists, add parent folder name as prefix
+                    if (Files.exists(targetFile)) {
+                        String parentName = imageFile.getParent().getFileName().toString();
+                        String newName = parentName + "_" + fileName;
+                        targetFile = imagesDir.resolve(newName);
+                    }
+                    
+                    Files.copy(imageFile, targetFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    logger.debug("Copied image file: {} to {}", imageFile, targetFile);
+                } catch (IOException e) {
+                    logger.warn("Error copying image file {}: {}", imageFile, e.getMessage());
+                }
+            });
+        
+        logger.info("Image files copied to: {}", imagesDir);
     }
     
     @Override
